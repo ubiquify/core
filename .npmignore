@@ -4,3 +4,7 @@ node_modules/
 logs
 *.log
 .npmrc
+ssl/*.key
+ssl/*.crt
+src/__tests__/
+dist/__tests__/
