@@ -69,6 +69,8 @@ interface VersionStore {
 
     diff: (other: VersionStore) => VersionStoreDiff
 
+    includesVersion: (versionRoot: Link) => boolean
+
     packMissingBlocks: (
         other: VersionStore,
         otherBlockStore: BlockStore
@@ -265,6 +267,23 @@ const versionStoreFactory = async ({
         }
     }
 
+    const includesVersion = (versionRoot: Link): boolean => {
+        for (const version of versions.values()) {
+            if (version.root.toString() === versionRoot.toString()) return true
+            if (
+                version.parent !== undefined &&
+                version.parent.toString() === versionRoot.toString()
+            )
+                return true
+            if (
+                version.mergeParent !== undefined &&
+                version.mergeParent.toString() === versionRoot.toString()
+            )
+                return true
+        }
+        return false
+    }
+
     const loadBlocks = async (
         cids: Set<any>,
         otherBlockStore: BlockStore
@@ -363,7 +382,12 @@ const versionStoreFactory = async ({
                     linkCodec,
                     valueCodec
                 )
-                await rootSet({ root, index, parent: first, mergeParent: second })
+                await rootSet({
+                    root,
+                    index,
+                    parent: first,
+                    mergeParent: second,
+                })
                 return { root, index, blocks }
             }
         } else {
@@ -395,6 +419,7 @@ const versionStoreFactory = async ({
         log,
         blocksExtract,
         diff,
+        includesVersion,
         packMissingBlocks,
         mergeVersions,
     }

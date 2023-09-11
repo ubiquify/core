@@ -149,7 +149,7 @@ describe('revise and merge item list', function () {
         assert.strictEqual('item user1', item4.value.get(KeyTypes.NAME))
     })
 
-    test('history', async () => {
+    test('history properly maintained across merges', async () => {
         const { chunk } = chunkerFactory(512, compute_chunks)
         const linkCodec: LinkCodec = linkCodecFactory()
         const valueCodec: ValueCodec = valueCodecFactory()
@@ -224,6 +224,9 @@ describe('revise and merge item list', function () {
         }
         const { root: first } = await tx1.commit({ comment: 'first user' })
 
+        expect(versionStore1.includesVersion(originalVersionRoot)).toBeTruthy()
+        expect(versionStore1.includesVersion(first)).toBeTruthy()
+
         const firstVersionStoreId = versionStore1.id()
         const firstVersionStoreRoot = versionStore1.versionStoreRoot()
         const firstVersionRoot = versionStore1.currentRoot()
@@ -258,6 +261,9 @@ describe('revise and merge item list', function () {
             await tx2.push(itemValue)
         }
         const { root: second } = await tx2.commit({ comment: 'second user' })
+
+        expect(versionStore2.includesVersion(originalVersionRoot)).toBeTruthy()
+        expect(versionStore2.includesVersion(second)).toBeTruthy()
 
         const secondVersionStoreId = versionStore2.id()
         const secondVersionStoreRoot = versionStore2.versionStoreRoot()
@@ -296,6 +302,9 @@ describe('revise and merge item list', function () {
             index: mergedIndex,
             blocks: mergedBlocks,
         } = await versionStore11.mergeVersions(versionStore22)
+
+        expect(versionStore11.includesVersion(firstVersionRoot)).toBeTruthy()
+        expect(versionStore11.includesVersion(secondVersionRoot)).toBeTruthy()
 
         const graphStore11 = graphStoreFactory({
             chunk,
@@ -347,6 +356,9 @@ describe('revise and merge item list', function () {
             blocks: mergedBlocks2,
         } = await versionStore0.mergeVersions(versionStore111)
 
+        expect(versionStore0.includesVersion(originalVersionRoot)).toBeTruthy()
+        expect(versionStore0.includesVersion(firstVersionRoot)).toBeTruthy()
+
         const mergedVersionStoreId = versionStore0.id()
         const mergedVersionStoreRoot = versionStore0.versionStoreRoot()
         const mergedVersionRoot = versionStore0.currentRoot()
@@ -397,6 +409,12 @@ describe('revise and merge item list', function () {
             index: mergedIndex3,
             blocks: mergedBlocks3,
         } = await versionStore00.mergeVersions(versionStore222)
+
+        expect(versionStore00.includesVersion(originalVersionRoot)).toBeTruthy()
+        expect(versionStore00.includesVersion(firstVersionRoot)).toBeTruthy()
+        expect(versionStore00.includesVersion(secondVersionRoot)).toBeTruthy()
+        expect(versionStore00.includesVersion(mergedRoot2)).toBeTruthy()
+        expect(versionStore00.includesVersion(mergedRoot3)).toBeTruthy()
 
         const mergedVersionStoreId3 = versionStore00.id()
         const mergedVersionStoreRoot3 = versionStore00.versionStoreRoot()
