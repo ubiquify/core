@@ -8,3 +8,5 @@ ssl/*.key
 ssl/*.crt
 src/__tests__/
 dist/__tests__/
+img/
+doc/
