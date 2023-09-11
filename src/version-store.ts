@@ -363,7 +363,7 @@ const versionStoreFactory = async ({
                     linkCodec,
                     valueCodec
                 )
-                rootSet({ root, index, parent: first, mergeParent: second })
+                await rootSet({ root, index, parent: first, mergeParent: second })
                 return { root, index, blocks }
             }
         } else {
