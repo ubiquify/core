@@ -71,6 +71,8 @@ interface VersionStore {
 
     includesVersion: (versionRoot: Link) => boolean
 
+    parentVersions: (versionRoot: Link) => Version[]
+
     packMissingBlocks: (
         other: VersionStore,
         otherBlockStore: BlockStore
@@ -284,6 +286,27 @@ const versionStoreFactory = async ({
         return false
     }
 
+    const recursivelyCollectParents = (version: Version, out: Version[]) => {
+        if (version !== undefined) {
+            out.push(version)
+            if (version.parent !== undefined) {
+                const parent = versions.get(version.parent.toString())
+                recursivelyCollectParents(parent, out)
+            }
+            if (version.mergeParent !== undefined) {
+                const mergeParent = versions.get(version.mergeParent.toString())
+                recursivelyCollectParents(mergeParent, out)
+            }
+        }
+    }
+
+    const parentVersions = (versionRoot: Link): Version[] => {
+        const out: Version[] = []
+        const version = versions.get(versionRoot.toString())
+        recursivelyCollectParents(version, out)
+        return out
+    }
+
     const loadBlocks = async (
         cids: Set<any>,
         otherBlockStore: BlockStore
@@ -420,6 +443,7 @@ const versionStoreFactory = async ({
         blocksExtract,
         diff,
         includesVersion,
+        parentVersions,
         packMissingBlocks,
         mergeVersions,
     }

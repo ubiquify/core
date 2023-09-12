@@ -11,7 +11,7 @@ import {
 } from '../codecs'
 import * as assert from 'assert'
 import { navigateVertices, PathElemType, RequestBuilder } from '../navigate'
-import { Link, Offset, Part, Prop, Comment, Tag } from '../types'
+import { Link, Offset, Part, Prop, Comment, Tag, Version } from '../types'
 import { VersionStore, versionStoreFactory } from '../version-store'
 
 /**
@@ -378,6 +378,141 @@ describe('Version management', function () {
         assert.strictEqual(versions[3].details.comment, 'First draft')
         assert.strictEqual(versions[3].details.tags.length, 1)
         assert.strictEqual(versions[3].details.tags[0], 'v0.0.1')
+    })
+
+    test('incremental graph versions, collect parent versions yields correct results parentVersions', async () => {
+        /**
+         * Build original data set
+         */
+        const story: VersionStore = await versionStoreFactory({
+            chunk,
+            linkCodec,
+            valueCodec,
+            blockStore,
+        })
+
+        const store = graphStore({ chunk, linkCodec, valueCodec, blockStore })
+
+        const graph = new Graph(story, store)
+
+        const tx = graph.tx()
+
+        await tx.start()
+
+        const v1 = tx.addVertex(ObjectTypes.FOLDER)
+        const v2 = tx.addVertex(ObjectTypes.FOLDER)
+        const v3 = tx.addVertex(ObjectTypes.FILE)
+
+        const e1 = await tx.addEdge(v1, v2, RlshpTypes.CONTAINS)
+        const e2 = await tx.addEdge(v1, v3, RlshpTypes.CONTAINS)
+
+        await tx.addVertexProp(v1, KeyTypes.NAME, 'root-folder', PropTypes.META)
+        await tx.addVertexProp(
+            v2,
+            KeyTypes.NAME,
+            'nested-folder',
+            PropTypes.META
+        )
+        await tx.addVertexProp(v3, KeyTypes.NAME, 'nested-file', PropTypes.META)
+        await tx.addVertexProp(
+            v2,
+            KeyTypes.CONTENT,
+            'hello world from v2',
+            PropTypes.DATA
+        )
+        await tx.addVertexProp(
+            v3,
+            KeyTypes.CONTENT,
+            'hello world from v3',
+            PropTypes.DATA
+        )
+
+        const { root: original } = await tx.commit({
+            comment: 'First draft',
+            tags: ['v0.0.1'],
+        })
+
+        /**
+         * Revise original, first change
+         */
+
+        const tx1 = graph.tx()
+        await tx1.start()
+        const v10 = await tx1.getVertex(0)
+        const v11 = tx1.addVertex(ObjectTypes.FILE)
+        const e11 = await tx1.addEdge(v10, v11, RlshpTypes.CONTAINS)
+        await tx1.addVertexProp(
+            v11,
+            KeyTypes.NAME,
+            'nested-file-user-1',
+            PropTypes.META
+        )
+        await tx1.addVertexProp(
+            v11,
+            KeyTypes.CONTENT,
+            'hello world from v11',
+            PropTypes.DATA
+        )
+
+        const { root: first } = await tx1.commit({
+            comment: 'Second draft',
+            tags: ['v0.0.2'],
+        })
+
+        /**
+         * Revise, second change
+         */
+
+        const tx2 = graph.tx()
+        await tx2.start()
+        const v20 = await tx2.getVertex(0)
+        const v21 = tx2.addVertex(ObjectTypes.FILE)
+        const e21 = await tx2.addEdge(v20, v21, RlshpTypes.CONTAINS)
+        await tx2.addVertexProp(
+            v21,
+            KeyTypes.NAME,
+            'nested-file-user-2',
+            PropTypes.META
+        )
+        await tx2.addVertexProp(
+            v21,
+            KeyTypes.CONTENT,
+            'hello world from v21',
+            PropTypes.DATA
+        )
+
+        const { root: second } = await tx2.commit({
+            comment: 'First release',
+            tags: ['v0.1.0'],
+        })
+
+        const parentVersions: Version[] = story.parentVersions(second)
+
+        console.log(parentVersions)
+
+        assert.strictEqual(parentVersions.length, 3)
+
+        assert.strictEqual(
+            linkCodec.encodeString(parentVersions[0].root),
+            linkCodec.encodeString(second)
+        )
+        assert.strictEqual(
+            linkCodec.encodeString(parentVersions[1].root),
+            linkCodec.encodeString(first)
+        )
+        assert.strictEqual(
+            linkCodec.encodeString(parentVersions[2].root),
+            linkCodec.encodeString(original)
+        )
+        assert.strictEqual(
+            linkCodec.encodeString(parentVersions[0].parent),
+            linkCodec.encodeString(first)
+        )
+        assert.strictEqual(
+            linkCodec.encodeString(parentVersions[1].parent),
+            linkCodec.encodeString(original)
+        )
+        assert.strictEqual(parentVersions[2].parent, undefined)
     })
 })
 
