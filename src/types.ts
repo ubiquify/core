@@ -1,3 +1,5 @@
+import { Json } from "aws-sdk/clients/robomaker"
+
 interface Part {
     [x: string]: any
     status: Status
@@ -159,6 +161,8 @@ type VersionDetails = {
     comment?: Comment
     tags?: Tag[]
     author?: string
+    email?: string
+    publicKey?: JsonWebKey
     signature?: Uint8Array
     timestamp: number
 }

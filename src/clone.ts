@@ -55,14 +55,31 @@ const fastCloneVersionDetails = (
     const clone: VersionDetails = {
         timestamp: versionDetails.timestamp,
     }
-    if (versionDetails.author !== undefined)
+    if (versionDetails.author !== undefined) {
         clone.author = versionDetails.author
-    if (versionDetails.comment !== undefined)
+    }
+    if (versionDetails.comment !== undefined) {
         clone.comment = versionDetails.comment
-    if (versionDetails.signature !== undefined)
+    }
+    if (versionDetails.signature !== undefined) {
         clone.signature = versionDetails.signature
-    if (versionDetails.tags !== undefined) clone.tags = versionDetails.tags
+    }
+    if (versionDetails.tags !== undefined) {
+        clone.tags = versionDetails.tags
+    }
+    if (versionDetails.publicKey !== undefined) {
+        clone.publicKey = versionDetails.publicKey
+    }
+    if (versionDetails.email !== undefined) {
+        clone.email = versionDetails.email
+    }
     return clone
 }
 
-export { fastCloneVertex, fastCloneEdge, fastCloneProp, fastCloneIndex, fastCloneVersionDetails }
+export {
+    fastCloneVertex,
+    fastCloneEdge,
+    fastCloneProp,
+    fastCloneIndex,
+    fastCloneVersionDetails,
+}

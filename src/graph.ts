@@ -31,6 +31,7 @@ import { TraversalVisitor, traverseVertices } from './depth-first'
 import { IndexStore } from './index-store'
 import { PropPredicate } from './navigate'
 import { Signer } from './trust'
+import base64 from 'base64-js'
 
 interface ElementAccessor {
     getVertex: (ref: VertexRef) => Promise<Vertex>
@@ -986,7 +987,13 @@ class Tx implements ElementAccessor {
             const signature = await signer.sign(root)
             versionDetails.signature = signature
             const publicKey = await signer.exportPublicKey()
-            versionDetails.author = publicKey
+            versionDetails.publicKey = publicKey
+            if (signer.name !== undefined) {
+                versionDetails.author = signer.name
+            }
+            if(signer.email !== undefined) {
+                versionDetails.email = signer.email
+            }
         }
 
         const version: Version = {

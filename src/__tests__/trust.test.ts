@@ -108,7 +108,7 @@ describe('Trust management', function () {
         assert.strictEqual(trusted, true)
 
         // verify stored key
-        const publicKeyJWK = JSON.parse(version.details.author)
+        const publicKeyJWK = version.details.publicKey
 
         console.log('publicKeyJWK', publicKeyJWK)
 

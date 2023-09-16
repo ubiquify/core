@@ -2,14 +2,20 @@ import { Link } from './types'
 
 interface Signer {
     sign: (root: Link) => Promise<Uint8Array>
-    exportPublicKey: () => Promise<string>
+    exportPublicKey: () => Promise<JsonWebKey>
+    name?: string
+    email?: string
 }
 
 const signerFactory = ({
+    name,
+    email,
     subtle,
     privateKey,
     publicKey,
 }: {
+    name?: string
+    email?: string
     subtle: SubtleCrypto
     privateKey: CryptoKey
     publicKey: CryptoKey
@@ -26,11 +32,10 @@ const signerFactory = ({
         return new Uint8Array(buffer)
     }
 
-    const exportPublicKey = async (): Promise<string> => {
-        const exported = await subtle.exportKey('jwk', publicKey)
-        return JSON.stringify(exported)
+    const exportPublicKey = async (): Promise<JsonWebKey> => {
+        return await subtle.exportKey('jwk', publicKey)
     }
-    return { sign, exportPublicKey }
+    return { name, email, sign, exportPublicKey }
 }
 
 const verify = async ({
@@ -57,12 +62,11 @@ const verify = async ({
 
 const importPublicKey = async ({
     subtle,
-    key: keyString,
+    key,
 }: {
     subtle: SubtleCrypto
-    key: string
+    key: JsonWebKey
 }): Promise<CryptoKey> => {
-    const key = JSON.parse(keyString)
     return await subtle.importKey(
         'jwk',
         key,
