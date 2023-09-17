@@ -211,11 +211,16 @@ const versionStoreFactory = async ({
         index,
         parent,
         mergeParent,
+        mergeDetails,
     }: {
         root: Link
         index?: RootIndex
         parent?: Link
         mergeParent?: Link
+        mergeDetails?: {
+            parent: VersionDetails
+            mergeParent: VersionDetails
+        }
     }): Promise<Link> => {
         const existingVersion = versions.get(root.toString())
         if (existingVersion !== undefined) {
@@ -223,6 +228,9 @@ const versionStoreFactory = async ({
             return existingVersion.root
         } else {
             const details: VersionDetails = { timestamp: Date.now() }
+            if (mergeDetails !== undefined) {
+                details.merge = mergeDetails
+            }
             const version: Version = { root, details }
             if (parent !== undefined) {
                 version.parent = parent
@@ -391,6 +399,11 @@ const versionStoreFactory = async ({
                 )
                 return { root: second, index: otherIndex, blocks: otherBlocks }
             } else {
+                const { version } = await versionGet()
+                const mergeDetails = {
+                    parent: version.details,
+                    mergeParent: otherVersion.details,
+                }
                 const { root, index, blocks } = await merge(
                     {
                         baseRoot: last.root,
@@ -410,6 +423,7 @@ const versionStoreFactory = async ({
                     index,
                     parent: first,
                     mergeParent: second,
+                    mergeDetails,
                 })
                 return { root, index, blocks }
             }

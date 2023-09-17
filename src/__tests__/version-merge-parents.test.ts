@@ -60,7 +60,7 @@ const linkCodec: LinkCodec = linkCodecFactory()
 const valueCodec: ValueCodec = valueCodecFactory()
 
 describe('Version store merge details', function () {
-    test('Merge parents are preserved after restore, parentx', async () => {
+    test('Merge parents are preserved after restore', async () => {
         const blockStore1: MemoryBlockStore = memoryBlockStoreFactory()
         const blockStore2: MemoryBlockStore = memoryBlockStoreFactory()
         /**
@@ -159,7 +159,10 @@ describe('Version store merge details', function () {
             PropTypes.DATA
         )
 
-        const { root: first } = await tx1.commit({})
+        const { root: first } = await tx1.commit({
+            comment: 'first commit',
+            tags: ['first'],
+        })
 
         assert.equal(versionStore1.id(), originalVersionStoreId)
 
@@ -203,7 +206,10 @@ describe('Version store merge details', function () {
             PropTypes.DATA
         )
 
-        const { root: second, blocks: secondBlocks } = await tx2.commit({})
+        const { root: second, blocks: secondBlocks } = await tx2.commit({
+            comment: 'second commit',
+            tags: ['second'],
+        })
 
         assert.equal(versionStore2.id(), originalVersionStoreId)
 
@@ -277,5 +283,16 @@ describe('Version store merge details', function () {
         expect(versionStore1.currentRoot().toString()).toEqual(
             versionStoreNew2.currentRoot().toString()
         )
+
+        const mergeVersion = versions1[0]
+        console.log(
+            'mergeVersionsDetails',
+            JSON.stringify(mergeVersion.details, null, 2)
+        )
+        const mergeVersionsDetails = mergeVersion.details.merge
+        const mergeVersionParent = mergeVersionsDetails.parent
+        const mergeVersionMergeParent = mergeVersionsDetails.mergeParent
+        expect(mergeVersionParent).toEqual(versionStore1.log()[1].details)
+        expect(mergeVersionMergeParent).toEqual(versionStore2.log()[0].details)
     })
 })

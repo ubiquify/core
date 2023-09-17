@@ -1,7 +1,7 @@
 {
     "name": "@ubiquify/core",
     "description": "Ubiquify core",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "homepage": "https://github.com/ubiquify/core",
     "repository": "https://github.com/ubiquify/core",
     "license": "(Apache-2.0 AND MIT)",

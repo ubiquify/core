@@ -73,6 +73,15 @@ const fastCloneVersionDetails = (
     if (versionDetails.email !== undefined) {
         clone.email = versionDetails.email
     }
+    if (versionDetails.merge !== undefined) {
+        const merge = {
+            parent: fastCloneVersionDetails(versionDetails.merge.parent),
+            mergeParent: fastCloneVersionDetails(
+                versionDetails.merge.mergeParent
+            ),
+        }
+        clone.merge = merge
+    }
     return clone
 }
 

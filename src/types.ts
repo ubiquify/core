@@ -1,4 +1,4 @@
-import { Json } from "aws-sdk/clients/robomaker"
+import { Json } from 'aws-sdk/clients/robomaker'
 
 interface Part {
     [x: string]: any
@@ -165,6 +165,10 @@ type VersionDetails = {
     publicKey?: JsonWebKey
     signature?: Uint8Array
     timestamp: number
+    merge?: {
+        parent: VersionDetails
+        mergeParent: VersionDetails
+    }
 }
 
 // function isShortString<MaxBytes>(text: string, maxBytes: MaxBytes): text is ShortString<MaxBytes> {
