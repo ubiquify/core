@@ -163,7 +163,7 @@ type VersionDetails = {
     author?: string
     email?: string
     publicKey?: JsonWebKey
-    signature?: Uint8Array
+    signature?: string
     timestamp: number
     merge?: {
         parent: VersionDetails

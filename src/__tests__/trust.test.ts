@@ -93,16 +93,13 @@ describe('Trust management', function () {
 
         const { version } = await otherVersionStore.versionGet()
 
-        console.log(
-            'signature',
-            base64.fromByteArray(version.details.signature)
-        )
+        console.log('signature', version.details.signature)
         // verify original key
         const trusted = await verify({
             subtle,
             publicKey,
             root: version.root,
-            signature: version.details.signature,
+            signature: base64.toByteArray(version.details.signature),
         })
 
         assert.strictEqual(trusted, true)
@@ -124,7 +121,7 @@ describe('Trust management', function () {
             subtle,
             publicKey: publicKey2,
             root: version.root,
-            signature: version.details.signature,
+            signature: base64.toByteArray(version.details.signature),
         })
 
         assert.strictEqual(trusted2, true)
@@ -136,7 +133,7 @@ describe('Trust management', function () {
             root: linkCodec.parseString(
                 'bafkreigy7o4ouzr2dgv3nzub5omjrsie3liam2mpojkaw7vazwoas3qbz4'
             ),
-            signature: version.details.signature,
+            signature: base64.toByteArray(version.details.signature),
         })
 
         assert.strictEqual(untrusted, false)

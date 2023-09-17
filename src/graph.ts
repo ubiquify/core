@@ -985,13 +985,13 @@ class Tx implements ElementAccessor {
 
         if (signer !== undefined) {
             const signature = await signer.sign(root)
-            versionDetails.signature = signature
+            versionDetails.signature = base64.fromByteArray(signature)
             const publicKey = await signer.exportPublicKey()
             versionDetails.publicKey = publicKey
             if (signer.name !== undefined) {
                 versionDetails.author = signer.name
             }
-            if(signer.email !== undefined) {
+            if (signer.email !== undefined) {
                 versionDetails.email = signer.email
             }
         }
