@@ -6,7 +6,14 @@
     "repository": "https://github.com/ubiquify/core",
     "license": "(Apache-2.0 AND MIT)",
     "author": "ubiquifier <ubiquify@proton.me>",
-    "keywords": [],
+    "keywords": [
+        "local-first",
+        "distributed",
+        "conflict-free",
+        "immutable",
+        "versioned",
+        "trustless"
+    ],
     "type": "module",
     "exports": "./dist/index.js",
     "module": "./dist/index.js",

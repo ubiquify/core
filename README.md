@@ -1,6 +1,13 @@
 # @ubiquify/core
 
-Core persistence infrastructure, forked from [O7](https://github.com/dstanesc/O-O-O-O-O-O-O). Check the link for more details.
+Graph data storage and exchange protocol that is:
+
+- local-first
+- distributed
+- conflict-free
+- immutable
+- versioned
+- trustless
 
 # Build
 
