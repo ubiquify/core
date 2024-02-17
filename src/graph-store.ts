@@ -358,7 +358,11 @@ const graphStore = ({
             chunk,
             encode: linkEncode,
         })
-        for (const block of blocks) await blockPut(block)
+        const promises: Promise<void>[] = []
+        for (const block of blocks) {
+            promises.push(blockPut(block))
+        }
+        await Promise.all(promises)
         return { root, index, blocks }
     }
 
@@ -391,7 +395,11 @@ const graphStore = ({
             appendBuffer,
             updateRequests
         )
-        for (const block of blocks) await blockPut(block)
+        const promises: Promise<void>[] = []
+        for (const block of blocks) {
+            promises.push(blockPut(block))
+        }
+        await Promise.all(promises)
         return { root, index, blocks }
     }
 
@@ -403,7 +411,11 @@ const graphStore = ({
             chunk,
             encode: linkEncode,
         })
-        for (const block of blocks) await blockPut(block)
+        const promises: Promise<void>[] = []
+        for (const block of blocks) {
+            promises.push(blockPut(block))
+        }
+        await Promise.all(promises)
         return { root, index, blocks }
     }
 
@@ -434,7 +446,11 @@ const graphStore = ({
             appendBuffer,
             updateRequests
         )
-        for (const block of blocks) await blockPut(block)
+        const promises: Promise<void>[] = []
+        for (const block of blocks) {
+            promises.push(blockPut(block))
+        }
+        await Promise.all(promises)
         return { root, index, blocks }
     }
 
@@ -449,7 +465,11 @@ const graphStore = ({
             chunk,
             encode: linkEncode,
         })
-        for (const block of blocks) await blockPut(block)
+        const promises: Promise<void>[] = []
+        for (const block of blocks) {
+            promises.push(blockPut(block))
+        }
+        await Promise.all(promises)
         return { root, index, blocks }
     }
 
@@ -484,7 +504,11 @@ const graphStore = ({
             appendBuffer,
             updateRequests
         )
-        for (const block of blocks) await blockPut(block)
+        const promises: Promise<void>[] = []
+        for (const block of blocks) {
+            promises.push(blockPut(block))
+        }
+        await Promise.all(promises)
         return { root, index, blocks }
     }
 
@@ -500,7 +524,11 @@ const graphStore = ({
             chunk,
             encode: linkEncode,
         })
-        for (const block of blocks) await blockPut(block)
+        const promises: Promise<void>[] = []
+        for (const block of blocks) {
+            promises.push(blockPut(block))
+        }
+        await Promise.all(promises)
         return { root, index, blocks, refs }
     }
 
@@ -529,7 +557,11 @@ const graphStore = ({
             },
             { buf, chunk, encode: linkEncode }
         )
-        for (const block of blocks) await blockPut(block)
+        const promises: Promise<void>[] = []
+        for (const block of blocks) {
+            promises.push(blockPut(block))
+        }
+        await Promise.all(promises)
         return { root, index, blocks, refs }
     }
 
@@ -541,7 +573,11 @@ const graphStore = ({
             chunk,
             encode: linkEncode,
         })
-        for (const block of blocks) await blockPut(block)
+        const promises: Promise<void>[] = []
+        for (const block of blocks) {
+            promises.push(blockPut(block))
+        }
+        await Promise.all(promises)
         return { root, index, blocks }
     }
 
@@ -574,7 +610,11 @@ const graphStore = ({
             appendBuffer,
             updateRequests
         )
-        for (const block of blocks) await blockPut(block)
+        const promises: Promise<void>[] = []
+        for (const block of blocks) {
+            promises.push(blockPut(block))
+        }
+        await Promise.all(promises)
         return { root, index, blocks }
     }
 
