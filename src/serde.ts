@@ -590,40 +590,61 @@ class PropDecoder extends BinaryDecoder {
 
 class PropValueEncoder extends BinaryEncoder {
     props: Prop[]
-    valueEncode: (json: any) => Uint8Array
+    valueEncode: (json: any) => Promise<Uint8Array>
     refOffset: number
-    constructor(
+    private constructor(
+        size: number,
         refOffset: number,
         props: Prop[],
-        valueEncode: (json: any) => Uint8Array
+        valueEncode: (json: any) => Promise<Uint8Array>
     ) {
-        super(
-            props
-                .map((prop) => valueEncode(prop.value).byteLength)
-                .reduce((a, b) => a + b, 0)
-        )
+        super(size)
         this.refOffset = refOffset
         this.props = props
         this.valueEncode = valueEncode
     }
 
-    writeValue(propRef: Ref, value: PropValue): ValueRef {
-        const bytes: Uint8Array = this.valueEncode(value)
+    public static async create(
+        refOffset: number,
+        props: Prop[],
+        valueEncode: (json: any) => Promise<Uint8Array>
+    ): Promise<PropValueEncoder> {
+        const totalSize = await PropValueEncoder.totalSize(props, valueEncode)
+        return new PropValueEncoder(totalSize, refOffset, props, valueEncode)
+    }
+
+    private static async totalSize(
+        props: Prop[],
+        valueEncode: (json: any) => Promise<Uint8Array>
+    ): Promise<number> {
+        let totalSize = 0
+        for (const prop of props) {
+            const encodedValue = await valueEncode(prop.value)
+            totalSize += encodedValue.byteLength
+        }
+        return totalSize
+    }
+
+    async writeValue(propRef: Ref, value: PropValue): Promise<ValueRef> {
+        const bytes: Uint8Array = await this.valueEncode(value)
         const ref = this.cursor + this.refOffset
         const length = bytes.byteLength
         this.writeBytes(bytes)
         return { propRef, ref, length }
     }
 
-    writeProp(prop: Prop): ValueRef {
-        const valueRef: ValueRef = this.writeValue(prop.offset, prop.value)
+    async writeProp(prop: Prop): Promise<ValueRef> {
+        const valueRef: ValueRef = await this.writeValue(
+            prop.offset,
+            prop.value
+        )
         return valueRef
     }
 
-    write(): { buf: Uint8Array; refs: Map<PropRef, ValueRef> } {
+    async write(): Promise<{ buf: Uint8Array; refs: Map<PropRef, ValueRef> }> {
         const refs: Map<PropRef, ValueRef> = new Map()
         for (const prop of this.props) {
-            const valueRef: ValueRef = this.writeProp(prop)
+            const valueRef: ValueRef = await this.writeProp(prop)
             refs.set(prop.offset, valueRef)
         }
         const buf = this.content()
@@ -632,18 +653,21 @@ class PropValueEncoder extends BinaryEncoder {
 }
 
 class PropValueDecoder extends BinaryDecoder {
-    valueDecode: (bytes: Uint8Array) => any
-    constructor(buffer: Uint8Array, valueDecode: (bytes: Uint8Array) => any) {
+    valueDecode: (bytes: Uint8Array) => Promise<any>
+    constructor(
+        buffer: Uint8Array,
+        valueDecode: (bytes: Uint8Array) => Promise<any>
+    ) {
         super(buffer)
         this.valueDecode = valueDecode
     }
 
-    readValue(valueRef: ValueRef): PropValue {
+    async readValue(valueRef: ValueRef): Promise<PropValue> {
         const bytes = this.readBytes(valueRef.length)
         return this.valueDecode(bytes)
     }
 
-    read(valueRefs: ValueRef[]): Map<PropRef, PropValue> {
+    async read(valueRefs: ValueRef[]): Promise<Map<PropRef, PropValue>> {
         const values: Map<PropRef, PropValue> = new Map()
         for (const valueRef of valueRefs) {
             const value = this.readValue(valueRef)
@@ -838,29 +862,44 @@ const VERSION_ID_SIZE_BYTES = 36
 class VersionEncoder extends BinaryEncoder {
     id: Link
     versions: Version[]
-    valueEncode: (json: any) => Uint8Array
+    valueEncode: (json: any) => Promise<Uint8Array>
     constructor(
+        size: number,
         id: Link,
         versions: Version[],
-        valueEncode: (json: any) => Uint8Array
+        valueEncode: (json: any) => Promise<Uint8Array>
     ) {
-        super(
-            VERSION_ID_SIZE_BYTES +
-                versions
-                    .map(
-                        (version) =>
-                            valueEncode(version.details).byteLength +
-                            VERSION_CONST_SIZE_BYTES
-                    )
-                    .reduce((a, b) => a + b, 0)
-        )
+        super(size)
         this.id = id
         this.versions = versions
         this.valueEncode = valueEncode
     }
-    writeDetails(details: VersionDetails) {
+
+    static async create(
+        id: Link,
+        versions: Version[],
+        valueEncode: (json: any) => Promise<Uint8Array>
+    ): Promise<VersionEncoder> {
+        const size = await VersionEncoder.calculateSize(versions, valueEncode)
+        return new VersionEncoder(size, id, versions, valueEncode)
+    }
+
+    private static async calculateSize(
+        versions: Version[],
+        valueEncode: (json: any) => Promise<Uint8Array>
+    ) {
+        let size = VERSION_ID_SIZE_BYTES
+        for (const version of versions) {
+            size +=
+                (await valueEncode(version.details)).byteLength +
+                VERSION_CONST_SIZE_BYTES
+        }
+        return size
+    }
+
+    async writeDetails(details: VersionDetails) {
         const purgedDetails = fastCloneVersionDetails(details)
-        const bytes: Uint8Array = this.valueEncode(purgedDetails)
+        const bytes: Uint8Array = await this.valueEncode(purgedDetails)
         const length = bytes.byteLength
         this.writeUInt(length) // 4
         this.writeBytes(bytes) // n
@@ -875,50 +914,50 @@ class VersionEncoder extends BinaryEncoder {
             this.writeLinkExists() // 1
             this.writeLink(version.mergeParent) // 36
         } else this.skipBytes(37)
-        this.writeDetails(version.details) // 4 + n
+        await this.writeDetails(version.details) // 4 + n
     }
-    write() {
+    async write() {
         this.writeLink(this.id) // 36
-        for (const version of this.versions) this.writeVersion(version)
+        for (const version of this.versions) await this.writeVersion(version)
         return this.content()
     }
 }
 
 class VersionDecoder extends BinaryDecoder {
     linkDecode: (linkBytes: Uint8Array) => Link
-    valueDecode: (bytes: Uint8Array) => any
+    valueDecode: (bytes: Uint8Array) => Promise<any>
     constructor(
         buffer: Uint8Array,
         linkDecode: (linkBytes: Uint8Array) => Link,
-        valueDecode: (bytes: Uint8Array) => any
+        valueDecode: (bytes: Uint8Array) => Promise<any>
     ) {
         super(buffer)
         this.linkDecode = linkDecode
         this.valueDecode = valueDecode
     }
 
-    readVersionDetails(): VersionDetails {
+    async readVersionDetails(): Promise<VersionDetails> {
         const length = this.readUInt()
         const bytes = this.readBytes(length)
-        return fastCloneVersionDetails(this.valueDecode(bytes))
+        return fastCloneVersionDetails(await this.valueDecode(bytes))
     }
 
-    readVersion(): Version {
+    async readVersion(): Promise<Version> {
         const root = this.readLink(this.linkDecode)
         const parent = this.readOptionalLink(this.linkDecode)
         const mergeParent = this.readOptionalLink(this.linkDecode)
-        const details = this.readVersionDetails()
+        const details = await this.readVersionDetails()
         const version: Version = { root, details }
         if (parent !== undefined) version.parent = parent
         if (mergeParent !== undefined) version.mergeParent = mergeParent
         return version
     }
 
-    read(): { id: Link; versions: Version[] } {
+    async read(): Promise<{ id: Link; versions: Version[] }> {
         const id: Link = this.readLink(this.linkDecode)
         const versions = []
         while (this.cursor < this.buffer.byteLength)
-            versions.push(this.readVersion())
+            versions.push(await this.readVersion())
         return { id, versions }
     }
 }

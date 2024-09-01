@@ -5,6 +5,7 @@ import * as Raw from 'multiformats/codecs/raw'
 import { sha256 } from 'multiformats/hashes/sha2'
 import { pack, unpack } from 'msgpackr'
 import { chunkyStore } from '@dstanesc/store-chunky-bytes'
+import { Cipher } from './encrypt'
 
 const { create, readAll } = chunkyStore()
 
@@ -43,16 +44,24 @@ interface BlockCodec {
 }
 
 interface ValueCodec {
-    encode: (value: any) => Uint8Array
-    decode: (valueBytes: Uint8Array) => any
+    encode: (value: any) => Promise<Uint8Array>
+    decode: (valueBytes: Uint8Array) => Promise<any>
 }
 
-const valueCodecFactory = (): ValueCodec => {
-    const encode = (value: any): Uint8Array => {
-        return pack(value) as Uint8Array
+const valueCodecFactory = (cipher?: Cipher): ValueCodec => {
+    const encode = async (value: any): Promise<Uint8Array> => {
+        return cipher
+            ? await cipher.encrypt(pack(value) as Uint8Array)
+            : (pack(value) as Uint8Array)
     }
-    const decode = (valueBytes: Uint8Array): any => {
-        return unpack(valueBytes)
+    const decode = async (valueBytes: Uint8Array): Promise<any> => {
+        try {
+            return cipher
+                ? unpack(await cipher.decrypt(valueBytes))
+                : unpack(valueBytes)
+        } catch (error) {
+            throw new Error('Decoding error')
+        }
     }
     return { encode, decode }
 }

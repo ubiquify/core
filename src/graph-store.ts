@@ -257,7 +257,7 @@ const graphStore = ({
             decode: linkDecode,
             get: blockGet,
         })
-        return new PropValueDecoder(bytes, valueDecode).readValue({
+        return await new PropValueDecoder(bytes, valueDecode).readValue({
             propRef,
             ref,
             length,
@@ -514,10 +514,8 @@ const graphStore = ({
 
     const propsValueCreate = async (props: Map<Offset, Prop>) => {
         const array = Array.from(props.values())
-        const { buf, refs } = new PropValueEncoder(
-            0,
-            array,
-            valueCodec.encode
+        const { buf, refs } = await (
+            await PropValueEncoder.create(0, array, valueCodec.encode)
         ).write()
         const { root, index, blocks } = await create({
             buf,
@@ -542,10 +540,12 @@ const graphStore = ({
         if (updated.size > 0)
             throw new Error('property value update not implemented')
         const lastOffset = indexOrig.indexStruct.byteArraySize
-        const { buf, refs } = new PropValueEncoder(
-            lastOffset,
-            Array.from(added.values()),
-            valueCodec.encode
+        const { buf, refs } = await (
+            await PropValueEncoder.create(
+                lastOffset,
+                Array.from(added.values()),
+                valueCodec.encode
+            )
         ).write()
 
         const { root, index, blocks } = await append(

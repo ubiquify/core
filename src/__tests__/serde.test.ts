@@ -113,10 +113,8 @@ describe('Serde validation with', function () {
             value: 'Hello World',
             nextProp: 888,
         }
-        const { refs, buf } = new PropValueEncoder(
-            0,
-            [p1, p2, p3],
-            valueEncode
+        const { refs, buf } = await (
+            await PropValueEncoder.create(0, [p1, p2, p3], valueEncode)
         ).write()
 
         const bytes = await new PropEncoder([p1, p2, p3], refs).write()
@@ -216,15 +214,17 @@ describe('Serde validation with', function () {
             },
         }
 
-        const bytes = new VersionEncoder(
-            CID.parse(
-                'bafkreibygummtcvcgmld7re3s4kjfoaf4z3zgxsdsqdmh3baom4suvgnem'
-            ),
-            [v1, v2, v3],
-            valueEncode
+        const bytes = await (
+            await VersionEncoder.create(
+                CID.parse(
+                    'bafkreibygummtcvcgmld7re3s4kjfoaf4z3zgxsdsqdmh3baom4suvgnem'
+                ),
+                [v1, v2, v3],
+                valueEncode
+            )
         ).write()
 
-        const { id, versions } = new VersionDecoder(
+        const { id, versions } = await new VersionDecoder(
             bytes,
             linkDecode,
             valueDecode

@@ -326,13 +326,16 @@ const propTest = async (
                 decode: linkCodec.decode,
                 get: blockStore.get,
             })
-            return new PropValueDecoder(bytes, valueCodec.decode).readValue({
+            return await new PropValueDecoder(
+                bytes,
+                valueCodec.decode
+            ).readValue({
                 propRef,
                 ref,
                 length,
             })
         }
-        return new PropDecoder(bytes, (ref: ValueRef) =>
+        return await new PropDecoder(bytes, (ref: ValueRef) =>
             valueGet({ root: valueRoot, index: valueIndex }, ref)
         ).read()
     }
@@ -538,10 +541,8 @@ const edgesCreate = async (array: Edge[]) => {
 }
 
 const propsValueCreate = async (array: Prop[]) => {
-    const { buf, refs } = new PropValueEncoder(
-        0,
-        array,
-        valueCodec.encode
+    const { buf, refs } = await (
+        await PropValueEncoder.create(0, array, valueCodec.encode)
     ).write()
     const { root, index, blocks } = await create({
         buf,

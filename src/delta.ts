@@ -303,7 +303,10 @@ const deltaFactory = ({
                         decode: linkDecode,
                         get: blockStore.get,
                     })
-                    return new PropValueDecoder(bytes, valueDecode).readValue({
+                    return await new PropValueDecoder(
+                        bytes,
+                        valueDecode
+                    ).readValue({
                         propRef,
                         ref,
                         length,

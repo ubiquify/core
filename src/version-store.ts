@@ -125,11 +125,12 @@ const versionStoreFactory = async ({
                 decode: linkCodec.decode,
                 get: blockStore.get,
             })
-            const { id: storeId, versions: versionArray } = new VersionDecoder(
-                bytes,
-                linkCodec.decode,
-                valueCodec.decode
-            ).read()
+            const { id: storeId, versions: versionArray } =
+                await new VersionDecoder(
+                    bytes,
+                    linkCodec.decode,
+                    valueCodec.decode
+                ).read()
             byteArrayRoot = storeRoot
             versionArray.forEach((v) => versions.set(v.root.toString(), v))
             identity = storeId
@@ -178,10 +179,12 @@ const versionStoreFactory = async ({
         }
         blocks: { cid: any; bytes: Uint8Array }[]
     }> => {
-        const buf = new VersionEncoder(
-            identity,
-            Array.from(versions.values()),
-            valueCodec.encode
+        const buf = await (
+            await VersionEncoder.create(
+                identity,
+                Array.from(versions.values()),
+                valueCodec.encode
+            )
         ).write()
         const { root, index, blocks } = await create({
             buf,
